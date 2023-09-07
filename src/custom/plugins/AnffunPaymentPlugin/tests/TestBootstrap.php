@@ -4,8 +4,8 @@ use Shopware\Core\TestBootstrapper;
 
 $loader = (new TestBootstrapper())
     ->addCallingPlugin()
-    ->addActivePlugins('SwagPaymentPlugin')
+    ->addActivePlugins('AnffunPaymentPlugin')
     ->bootstrap()
     ->getClassLoader();
 
-$loader->addPsr4('SwagPaymentPlugin\\Tests\\', __DIR__);
+$loader->addPsr4('AnffunPaymentPlugin\\Tests\\', __DIR__);
