@@ -5,8 +5,9 @@
            xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <services>
-        <!-- Плагін AnfPaymentPlugin -->
-        <service id="Anf\PaymentPlugin\AnfPaymentPlugin">
+        <service id="Anf\PaymentPlugin\Service\AnfPaymentHandler">
+            <argument type="service"
+                      id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler"/>
             <tag name="shopware.payment.method.async"/>
         </service>
     </services>
