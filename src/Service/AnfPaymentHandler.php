@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Anf\Payment\Service;
+namespace Anf\PaymentPlugin\Service;
 
 use Shopware\Core\Checkout\Payment\PaymentException;
 use Shopware\Core\Checkout\Payment\Cart\AsyncPaymentTransactionStruct;
