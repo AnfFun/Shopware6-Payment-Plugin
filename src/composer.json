@@ -1,0 +1,15 @@
+{
+  "name": "anf/payment",
+  "description": "Dependencies for payment plugin",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "Max",
+      "email": "prokofmaxwork@gmail.com"
+    }
+  ],
+  "require": {
+    "gingerplugins/ginger-plugin-sdk": "*"
+  }
+}

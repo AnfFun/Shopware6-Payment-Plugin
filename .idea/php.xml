@@ -13,6 +13,9 @@
   <component name="PhpIncludePathManager">
     <include_path>
       <path value="$PROJECT_DIR$/vendor/composer" />
+      <path value="$PROJECT_DIR$/src/vendor/gingerpayments/ginger-php" />
+      <path value="$PROJECT_DIR$/src/vendor/gingerplugins/ginger-plugin-sdk" />
+      <path value="$PROJECT_DIR$/src/vendor/composer" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="8.2" />

@@ -12,7 +12,7 @@ use Shopware\Core\Framework\Plugin\Context\DeactivateContext;
 use Shopware\Core\Framework\Plugin\Context\InstallContext;
 use Shopware\Core\Framework\Plugin\Context\UninstallContext;
 use Shopware\Core\Framework\Plugin\Util\PluginIdProvider;
-use Anf\Payment\Service\AnfPaymentHandler;
+use Anf\PaymentPlugin\Service\AnfPaymentHandler;
 
 class AnfPaymentPlugin extends Plugin
 {
