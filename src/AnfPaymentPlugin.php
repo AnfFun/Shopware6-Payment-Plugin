@@ -2,6 +2,8 @@
 
 namespace Anf\PaymentPlugin;
 
+use GingerPluginSdk\Collections\Transactions;
+use GingerPluginSdk\Properties\ClientOptions;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
@@ -13,6 +15,7 @@ use Shopware\Core\Framework\Plugin\Context\InstallContext;
 use Shopware\Core\Framework\Plugin\Context\UninstallContext;
 use Shopware\Core\Framework\Plugin\Util\PluginIdProvider;
 use Anf\PaymentPlugin\Service\AnfPaymentHandler;
+use GingerPluginSdk\Client;
 
 class AnfPaymentPlugin extends Plugin
 {

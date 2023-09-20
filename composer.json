@@ -5,7 +5,9 @@
   "license": "MIT",
   "autoload": {
     "psr-4": {
-      "Anf\\PaymentPlugin\\": "src/"
+      "Anf\\PaymentPlugin\\": "src/",
+      "GingerPluginSdk\\": "src/vendor/gingerplugins/ginger-plugin-sdk/src",
+      "Ginger\\": "src/vendor/gingerpayments/ginger-php/src"
     }
   },
   "extra": {

@@ -10,6 +10,8 @@ class ComposerStaticInitba1f1031fcc3dd923505464b3465c0cf
         'A' => 
         array (
             'Anf\\PaymentPlugin\\' => 18,
+            'Anf\\GingerPluginSdk\\' => 20,
+            'Anf\\GingerLoad\\' => 15,
         ),
     );
 
@@ -17,6 +19,14 @@ class ComposerStaticInitba1f1031fcc3dd923505464b3465c0cf
         'Anf\\PaymentPlugin\\' => 
         array (
             0 => __DIR__ . '/../..' . '/src',
+        ),
+        'Anf\\GingerPluginSdk\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/src/vendor/gingerplugins/ginger-plugin-sdk',
+        ),
+        'Anf\\GingerLoad\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/src/vendor',
         ),
     );
 
