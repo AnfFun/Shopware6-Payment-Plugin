@@ -12,6 +12,7 @@ use Shopware\Core\Checkout\Payment\Exception\CustomerCanceledAsyncPaymentExcepti
 use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
+use Shopware\Core\Checkout\Cart\Cart;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
@@ -47,10 +48,26 @@ class AnfPaymentHandler implements AsynchronousPaymentHandlerInterface
     public function pay(AsyncPaymentTransactionStruct $transaction, RequestDataBag $dataBag, SalesChannelContext $salesChannelContext): RedirectResponse
     {
         // Method that sends the return URL to the external gateway and gets a redirect URL back
-        $newClient = $this->createGingerClient();
-        dd($newClient);
         try {
-            $redirectUrl = $this->sendReturnUrlToExternalGateway($transaction->getReturnUrl());
+            $newClient = $this->createGingerClient();
+            $apiClient = $newClient->getApiClient();
+
+            $orderDetails = [
+                'amount' => 100,
+                'description' => 'iDeal test payment',
+                'currency' => 'EUR',
+                "return_url" => "http://localhost/",
+                'transactions' => [
+                    [
+                        'payment_method' => 'ideal',
+                        'payment_method_details' => [
+                            'issuer_id' => 'RABONL2U'
+                        ]
+                    ]
+                ]
+            ];
+            $order = $apiClient->createOrder($orderDetails);
+            $redirectUrl = $order['transactions'][0]['payment_url'];
         } catch (\Exception $e) {
             throw PaymentException::asyncProcessInterrupted(
                 $transaction->getOrderTransaction()->getId(),
@@ -58,7 +75,6 @@ class AnfPaymentHandler implements AsynchronousPaymentHandlerInterface
             );
         }
 
-        // Redirect to external gateway
         return new RedirectResponse($redirectUrl);
     }
 
@@ -73,7 +89,7 @@ class AnfPaymentHandler implements AsynchronousPaymentHandlerInterface
         if ($request->query->getBoolean('cancel')) {
             throw PaymentException::asyncCustomerCanceled(
                 $transactionId,
-                'Customer canceled the payment on the PayPal page'
+                'Customer canceled the payment on the Ginger page'
             );
         }
 
@@ -91,12 +107,6 @@ class AnfPaymentHandler implements AsynchronousPaymentHandlerInterface
     }
 
 
-    private function sendReturnUrlToExternalGateway(string $getReturnUrl): string
-    {
-        $paymentProviderUrl = 'https://api.dev.gingerpayments.com/';
 
-        // Do some API Call to your payment provider
-
-        return $paymentProviderUrl;
-    }
 }
+

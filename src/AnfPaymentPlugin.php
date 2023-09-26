@@ -57,13 +57,10 @@ class AnfPaymentPlugin extends Plugin
         $pluginId = $pluginIdProvider->getPluginIdByBaseClass(get_class($this), $context);
 
         $PaymentData = [
-            // payment handler will be selected by the identifier
             'handlerIdentifier' => AnfPaymentHandler::class,
-            'name' => 'PayPlug',
-            'description' => 'Custom payment method for shopware',
+            'name' => 'iDeal',
+            'description' => 'iDeal payment method',
             'pluginId' => $pluginId,
-            // if true, payment method will also be available after the order 
-            // is created, e.g. if payment fails and the user wants to try again
             'afterOrderEnabled' => true,
         ];
 
