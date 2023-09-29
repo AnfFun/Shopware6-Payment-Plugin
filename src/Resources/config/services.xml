@@ -6,9 +6,14 @@
 
     <services>
         <service id="Anf\PaymentPlugin\Service\AnfPaymentHandler">
-            <argument type="service" id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler"/>
+            <argument type="service"
+                      id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler"/>
             <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
             <tag name="shopware.payment.method.async"/>
+        </service>
+
+        <service id="Anf\PaymentPlugin\Subscriber\AnfPaymentMethodSubscriber">
+            <tag name="kernel.event_subscriber"/>
         </service>
     </services>
 </container>

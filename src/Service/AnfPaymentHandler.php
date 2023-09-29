@@ -2,6 +2,7 @@
 
 namespace Anf\PaymentPlugin\Service;
 
+use Ginger\ApiClient;
 use GingerPluginSdk\Client;
 use GingerPluginSdk\Properties\ClientOptions;
 use Shopware\Core\Checkout\Payment\PaymentException;
@@ -22,7 +23,8 @@ class AnfPaymentHandler implements AsynchronousPaymentHandlerInterface
     private OrderTransactionStateHandler $transactionStateHandler;
     private SystemConfigService $systemConfigService;
 
-    public function __construct(OrderTransactionStateHandler $transactionStateHandler, SystemConfigService $systemConfigService) {
+    public function __construct(OrderTransactionStateHandler $transactionStateHandler, SystemConfigService $systemConfigService)
+    {
         $this->transactionStateHandler = $transactionStateHandler;
         $this->systemConfigService = $systemConfigService;
     }
@@ -36,9 +38,20 @@ class AnfPaymentHandler implements AsynchronousPaymentHandlerInterface
         return new Client($clientOptions);
     }
 
+    private function createApiClient(): ApiClient
+    {
+        return $this->createGingerClient()->getApiClient();
+    }
+
     private function getApiKey(): string
     {
         return $this->systemConfigService->get('AnfPaymentPlugin.config.clientApiKey');
+    }
+
+    private function getIssuers(): array
+    {
+        $apiClient = $this->createGingerClient()->getApiClient();
+        return $apiClient->getIdealIssuers();
     }
 
 
@@ -49,19 +62,19 @@ class AnfPaymentHandler implements AsynchronousPaymentHandlerInterface
     {
         // Method that sends the return URL to the external gateway and gets a redirect URL back
         try {
-            $newClient = $this->createGingerClient();
-            $apiClient = $newClient->getApiClient();
+            $apiClient = $this->createApiClient();
+            $idealIssures = $this->getIssuers();
 
             $orderDetails = [
                 'amount' => 100,
-                'description' => 'iDeal test payment',
+                'description' => 'IDEAL',
                 'currency' => 'EUR',
-                "return_url" => "http://localhost/",
+                'return_url' => $transaction->getReturnUrl(),
                 'transactions' => [
                     [
                         'payment_method' => 'ideal',
                         'payment_method_details' => [
-                            'issuer_id' => 'RABONL2U'
+                            'issuer_id' => 'BANKNL3Y'
                         ]
                     ]
                 ]
@@ -84,20 +97,23 @@ class AnfPaymentHandler implements AsynchronousPaymentHandlerInterface
     public function finalize(AsyncPaymentTransactionStruct $transaction, Request $request, SalesChannelContext $salesChannelContext): void
     {
         $transactionId = $transaction->getOrderTransaction()->getId();
+        $orderId = $request->query->get('order_id');
+        $order = $this->createGingerClient()->getApiClient()->getOrder($orderId);
+        $paymentState = $order['status'];
 
         // Example check if the user cancelled. Might differ for each payment provider
-        if ($request->query->getBoolean('cancel')) {
-            throw PaymentException::asyncCustomerCanceled(
+        if ($paymentState == 'cancelled') {
+            throw PaymentException::CustomerCanceled(
                 $transactionId,
-                'Customer canceled the payment on the Ginger page'
+                'Customer canceled the payment on the PayPal page'
             );
         }
 
         // Example check for the actual status of the payment. Might differ for each payment provider
-        $paymentState = $request->query->getAlpha('status');
+
 
         $context = $salesChannelContext->getContext();
-        if ($paymentState === 'completed') {
+        if ($paymentState == 'completed') {
             // Payment completed, set transaction status to "paid"
             $this->transactionStateHandler->paid($transaction->getOrderTransaction()->getId(), $context);
         } else {
@@ -105,7 +121,6 @@ class AnfPaymentHandler implements AsynchronousPaymentHandlerInterface
             $this->transactionStateHandler->reopen($transaction->getOrderTransaction()->getId(), $context);
         }
     }
-
 
 
 }
