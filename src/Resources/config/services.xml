@@ -13,6 +13,7 @@
         </service>
 
         <service id="Anf\PaymentPlugin\Subscriber\AnfPaymentMethodSubscriber">
+            <argument type="service" id="Anf\PaymentPlugin\Service\AnfPaymentHandler" />
             <tag name="kernel.event_subscriber"/>
         </service>
     </services>

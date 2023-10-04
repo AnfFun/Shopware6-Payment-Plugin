@@ -1,0 +1,16 @@
+{% sw_extends '@Storefront/storefront/page/checkout/confirm/confirm-payment.html.twig' %}
+ {% block page_checkout_confirm_payment_title %}
+     <div class="card-title">
+         {{ "checkout.confirmPaymentMethod"|trans|sw_sanitize }}
+         <h1>Custom</h1>
+     </div>
+ {% endblock %}
+
+{% block page_checkout_change_payment_form %}
+    {% sw_include '@Storefront/storefront/component/payment/payment-form.html.twig' with {
+        'action': 'frontend.checkout.configure',
+        'actionPath': path('frontend.checkout.configure'),
+        'redirect': 'frontend.checkout.confirm.page',
+        'redirectParameters': {redirected: 0}|json_encode,
+    } %}
+{% endblock %}

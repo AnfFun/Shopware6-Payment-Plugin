@@ -1,0 +1,36 @@
+{% sw_extends '@Storefront/storefront/component/payment/payment-form.html.twig' %}
+
+{% block page_checkout_change_payment_form_element %}
+    <form id="changePaymentForm"
+          name="changePaymentForm"
+          action="{{ actionPath }}"
+          data-form-auto-submit="true"
+          data-form-auto-submit-options='{{ formAjaxSubmitOptions|json_encode }}'
+          method="post">
+
+        {% block page_checkout_change_payment_form_redirect %}
+            <input type="hidden" name="redirectTo" value="{{ redirect }}">
+            <input type="hidden" name="redirectParameters" value="{{ redirectParameters }}">
+        {% endblock %}
+
+        {% block page_checkout_change_payment_form_fields %}
+            {% sw_include '@Storefront/storefront/component/payment/payment-fields.html.twig' with {
+                'visiblePaymentMethodsLimit': 1,
+                'selectedPaymentMethodId': context.paymentMethod.id
+            } %}
+
+            {% set idealIssuers = page.extensions.anf_ideal_issuers %}
+
+            <div class="form-group">
+                <label for="issuerSelect">Select iDeal issuer:</label>
+                <select class="form-control" id="issuerSelect" name="issuer_id">
+                    <option value="">-- Please Select --</option>
+                    {% for issuer in idealIssuers %}
+                        <option value="{{ issuer.id }}">{{ issuer.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        {% endblock %}
+
+    </form>
+{% endblock %}

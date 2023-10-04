@@ -5,6 +5,7 @@ namespace Anf\PaymentPlugin\Service;
 use Ginger\ApiClient;
 use GingerPluginSdk\Client;
 use GingerPluginSdk\Properties\ClientOptions;
+use http\Env\Response;
 use Shopware\Core\Checkout\Payment\PaymentException;
 use Shopware\Core\Checkout\Payment\Cart\AsyncPaymentTransactionStruct;
 use Shopware\Core\Checkout\Payment\Cart\PaymentHandler\AsynchronousPaymentHandlerInterface;
@@ -48,11 +49,13 @@ class AnfPaymentHandler implements AsynchronousPaymentHandlerInterface
         return $this->systemConfigService->get('AnfPaymentPlugin.config.clientApiKey');
     }
 
-    private function getIssuers(): array
+    public function getIssuers(): array
     {
-        $apiClient = $this->createGingerClient()->getApiClient();
+        $apiClient = $this->createApiClient();
         return $apiClient->getIdealIssuers();
     }
+
+
 
 
     /**
@@ -61,33 +64,38 @@ class AnfPaymentHandler implements AsynchronousPaymentHandlerInterface
     public function pay(AsyncPaymentTransactionStruct $transaction, RequestDataBag $dataBag, SalesChannelContext $salesChannelContext): RedirectResponse
     {
         // Method that sends the return URL to the external gateway and gets a redirect URL back
-        try {
-            $apiClient = $this->createApiClient();
-            $idealIssures = $this->getIssuers();
+        $currency = $transaction->getOrder()->getCurrency()->getIsoCode();
+        $returnUrl = $transaction->getReturnUrl();
+        $amountTotal = $transaction->getOrder()->getAmountTotal();
+        $issuerId = $dataBag->get('issuer_id');
+        dd($issuerId);
 
-            $orderDetails = [
-                'amount' => 100,
-                'description' => 'IDEAL',
-                'currency' => 'EUR',
-                'return_url' => $transaction->getReturnUrl(),
-                'transactions' => [
-                    [
-                        'payment_method' => 'ideal',
-                        'payment_method_details' => [
-                            'issuer_id' => 'BANKNL3Y'
-                        ]
+        $orderDetails = [
+            'amount' => 100,
+            'description' => 'IDEAL',
+            'currency' => $currency,
+            'return_url' => $returnUrl,
+            'transactions' => [
+                [
+                    'payment_method' => 'ideal',
+                    'payment_method_details' => [
+                        'issuer_id' => 'BANKNL3Y'
                     ]
                 ]
-            ];
-            $order = $apiClient->createOrder($orderDetails);
-            $redirectUrl = $order['transactions'][0]['payment_url'];
+            ]
+        ];
+
+        $order = $this->createApiClient()->createOrder($orderDetails);
+
+        $redirectUrl = $order['transactions'][0]['payment_url'];
+        try {
+
         } catch (\Exception $e) {
             throw PaymentException::asyncProcessInterrupted(
                 $transaction->getOrderTransaction()->getId(),
                 'An error occurred during the communication with external payment gateway' . PHP_EOL . $e->getMessage()
             );
         }
-
         return new RedirectResponse($redirectUrl);
     }
 
@@ -98,7 +106,7 @@ class AnfPaymentHandler implements AsynchronousPaymentHandlerInterface
     {
         $transactionId = $transaction->getOrderTransaction()->getId();
         $orderId = $request->query->get('order_id');
-        $order = $this->createGingerClient()->getApiClient()->getOrder($orderId);
+        $order = $this->createApiClient()->getOrder($orderId);
         $paymentState = $order['status'];
 
         // Example check if the user cancelled. Might differ for each payment provider
