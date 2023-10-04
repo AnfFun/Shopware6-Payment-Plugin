@@ -5,5 +5,32 @@
     </div>
 {% endblock %}
 
+{% block page_checkout_aside_actions %}
+    <div class="checkout-aside-action">
+        <form id="confirmOrderForm"
+              action="{{ confirmOrderFormAction }}"
+              data-form-preserver="true"
+              data-form-submit-loader="true"
+              data-form-add-history="true"
+              data-form-add-history-options='{{ formAddHistoryOptions|json_encode }}'
+              method="post">
+            <input type="hidden" name="selectedIssuerId" id="selectedIssuerId" value="">
+            {% block page_checkout_confirm_form_submit %}
+                <div class="d-grid">
+                    <button id="confirmFormSubmit"
+                            class="btn btn-primary btn-lg"
+                            form="confirmOrderForm"
+                            {% if page.cart.errors.blockResubmit %}
+                                disabled
+                            {% endif %}
+                            type="submit">
+                        {{ "checkout.confirmSubmit"|trans|sw_sanitize }}
+                    </button>
+                </div>
+            {% endblock %}
+        </form>
+    </div>
+{% endblock %}
+
 
 

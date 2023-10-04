@@ -29,6 +29,14 @@
                         <option value="{{ issuer.id }}">{{ issuer.name }}</option>
                     {% endfor %}
                 </select>
+                <script>
+                    document.getElementById('issuerSelect').addEventListener('change', function() {
+                        const selectedIssuerId = this.value;
+                        console.log('Selected issuer ID:', selectedIssuerId);
+                        document.getElementById('selectedIssuerId').value = selectedIssuerId;
+                    });
+
+                </script>
             </div>
         {% endblock %}
 

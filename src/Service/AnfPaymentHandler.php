@@ -56,39 +56,39 @@ class AnfPaymentHandler implements AsynchronousPaymentHandlerInterface
     }
 
 
-
-
     /**
      * @throws AsyncPaymentProcessException
      */
     public function pay(AsyncPaymentTransactionStruct $transaction, RequestDataBag $dataBag, SalesChannelContext $salesChannelContext): RedirectResponse
     {
-        // Method that sends the return URL to the external gateway and gets a redirect URL back
-        $currency = $transaction->getOrder()->getCurrency()->getIsoCode();
-        $returnUrl = $transaction->getReturnUrl();
-        $amountTotal = $transaction->getOrder()->getAmountTotal();
-        $issuerId = $dataBag->get('issuer_id');
-        dd($issuerId);
 
-        $orderDetails = [
-            'amount' => 100,
-            'description' => 'IDEAL',
-            'currency' => $currency,
-            'return_url' => $returnUrl,
-            'transactions' => [
-                [
-                    'payment_method' => 'ideal',
-                    'payment_method_details' => [
-                        'issuer_id' => 'BANKNL3Y'
+        try {
+            // Method that sends the return URL to the external gateway and gets a redirect URL back
+
+            $currency = $transaction->getOrder()->getCurrency()->getIsoCode();
+            $returnUrl = $transaction->getReturnUrl();
+            $amountTotal = round($transaction->getOrder()->getAmountTotal() * 100);
+            $issuerId = $dataBag->get('selectedIssuerId');
+            $description = $transaction->getOrder()->getLineItems()->first()->getLabel();
+
+            $orderDetails = [
+                'amount' => $amountTotal,
+                'description' => $description,
+                'currency' => $currency,
+                'return_url' => $returnUrl,
+                'transactions' => [
+                    [
+                        'payment_method' => 'ideal',
+                        'payment_method_details' => [
+                            'issuer_id' => $issuerId
+                        ]
                     ]
                 ]
-            ]
-        ];
+            ];
 
-        $order = $this->createApiClient()->createOrder($orderDetails);
+            $order = $this->createApiClient()->createOrder($orderDetails);
 
-        $redirectUrl = $order['transactions'][0]['payment_url'];
-        try {
+            $redirectUrl = $order['transactions'][0]['payment_url'];
 
         } catch (\Exception $e) {
             throw PaymentException::asyncProcessInterrupted(

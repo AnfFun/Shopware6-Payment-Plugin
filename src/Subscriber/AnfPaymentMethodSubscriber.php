@@ -34,7 +34,6 @@ class AnfPaymentMethodSubscriber implements EventSubscriberInterface
             if ($method->getName() === 'iDeal') {
 
                 $idealIssuers = $this->paymentHandler->getIssuers();
-                dump($idealIssuers);
                 $event->getPage()->addArrayExtension('anf_ideal_issuers', $idealIssuers);
             }
         }
