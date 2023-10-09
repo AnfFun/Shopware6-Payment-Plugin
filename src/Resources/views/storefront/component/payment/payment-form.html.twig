@@ -19,13 +19,13 @@
                 'selectedPaymentMethodId': context.paymentMethod.id
             } %}
 
-            {% set idealIssuers = page.extensions.anf_ideal_issuers %}
+
 
             <div class="form-group">
                 <label for="issuerSelect">Select iDeal issuer:</label>
                 <select class="form-control" id="issuerSelect" name="issuer_id">
                     <option value="">-- Please Select --</option>
-                    {% for issuer in idealIssuers %}
+                    {% for issuer in page.extensions.anf_ideal_issuers %}
                         <option value="{{ issuer.id }}">{{ issuer.name }}</option>
                     {% endfor %}
                 </select>
