@@ -10,6 +10,7 @@
     }
   ],
   "require": {
-    "gingerplugins/ginger-plugin-sdk": "*"
+    "gingerplugins/ginger-plugin-sdk": "*",
+    "ext-http": "*"
   }
 }

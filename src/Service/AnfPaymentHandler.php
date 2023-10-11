@@ -5,7 +5,6 @@ namespace Anf\PaymentPlugin\Service;
 use Ginger\ApiClient;
 use GingerPluginSdk\Client;
 use GingerPluginSdk\Properties\ClientOptions;
-use http\Env\Response;
 use Shopware\Core\Checkout\Payment\PaymentException;
 use Shopware\Core\Checkout\Payment\Cart\AsyncPaymentTransactionStruct;
 use Shopware\Core\Checkout\Payment\Cart\PaymentHandler\AsynchronousPaymentHandlerInterface;
@@ -14,7 +13,6 @@ use Shopware\Core\Checkout\Payment\Exception\CustomerCanceledAsyncPaymentExcepti
 use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
-use Shopware\Core\Checkout\Cart\Cart;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
@@ -67,6 +65,7 @@ class AnfPaymentHandler implements AsynchronousPaymentHandlerInterface
 
             $currency = $transaction->getOrder()->getCurrency()->getIsoCode();
             $returnUrl = $transaction->getReturnUrl();
+            $webhookUrl = 'https://4b7e-193-109-145-96.ngrok-free.app/webhook/data';
             $amountTotal = round($transaction->getOrder()->getAmountTotal() * 100);
             $issuerId = $dataBag->get('selectedIssuerId');
             $description = $transaction->getOrder()->getLineItems()->first()->getLabel();
@@ -76,6 +75,7 @@ class AnfPaymentHandler implements AsynchronousPaymentHandlerInterface
                 'description' => $description,
                 'currency' => $currency,
                 'return_url' => $returnUrl,
+                'webhook_url' => $webhookUrl,
                 'transactions' => [
                     [
                         'payment_method' => 'ideal',
