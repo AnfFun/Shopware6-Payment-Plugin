@@ -65,10 +65,10 @@ class AnfPaymentHandler implements AsynchronousPaymentHandlerInterface
 
             $currency = $transaction->getOrder()->getCurrency()->getIsoCode();
             $returnUrl = $transaction->getReturnUrl();
-            $webhookUrl = 'https://4b7e-193-109-145-96.ngrok-free.app/webhook/data';
             $amountTotal = round($transaction->getOrder()->getAmountTotal() * 100);
             $issuerId = $dataBag->get('selectedIssuerId');
             $description = $transaction->getOrder()->getLineItems()->first()->getLabel();
+            $webhookUrl = 'https://9f74-193-109-145-96.ngrok-free.app/webhook/data';
 
             $orderDetails = [
                 'amount' => $amountTotal,
@@ -110,24 +110,24 @@ class AnfPaymentHandler implements AsynchronousPaymentHandlerInterface
         $paymentState = $order['status'];
 
         // Example check if the user cancelled. Might differ for each payment provider
-        if ($paymentState == 'cancelled') {
-            throw PaymentException::CustomerCanceled(
-                $transactionId,
-                'Customer canceled the payment on the PayPal page'
-            );
-        }
+//        if ($paymentState == 'cancelled') {
+//            throw PaymentException::CustomerCanceled(
+//                $transactionId,
+//                'Customer canceled the payment on the PayPal page'
+//            );
+//        }
 
         // Example check for the actual status of the payment. Might differ for each payment provider
 
 
-        $context = $salesChannelContext->getContext();
-        if ($paymentState == 'completed') {
-            // Payment completed, set transaction status to "paid"
-            $this->transactionStateHandler->paid($transaction->getOrderTransaction()->getId(), $context);
-        } else {
-            // Payment not completed, set transaction status to "open"
-            $this->transactionStateHandler->reopen($transaction->getOrderTransaction()->getId(), $context);
-        }
+//        $context = $salesChannelContext->getContext();
+//        if ($paymentState == 'completed') {
+//            // Payment completed, set transaction status to "paid"
+//            $this->transactionStateHandler->paid($transaction->getOrderTransaction()->getId(), $context);
+//        } else {
+//            // Payment not completed, set transaction status to "open"
+//            $this->transactionStateHandler->reopen($transaction->getOrderTransaction()->getId(), $context);
+//        }
     }
 
 
