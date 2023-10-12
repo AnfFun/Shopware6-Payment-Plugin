@@ -26,8 +26,6 @@ class AnfPaymentPlugin extends Plugin
 
     public function uninstall(UninstallContext $context): void
     {
-        // Only set the payment method to inactive when uninstalling. Removing the payment method would
-        // cause data consistency issues, since the payment method might have been used in several orders
         $this->setPaymentMethodIsActive(false, $context->getContext());
     }
 
@@ -47,7 +45,6 @@ class AnfPaymentPlugin extends Plugin
     {
         $paymentMethodExists = $this->getPaymentMethodId();
 
-        // Payment method exists already, no need to continue here
         if ($paymentMethodExists) {
             return;
         }
@@ -76,7 +73,6 @@ class AnfPaymentPlugin extends Plugin
 
         $paymentMethodId = $this->getPaymentMethodId();
 
-        // Payment does not even exist, so nothing to (de-)activate here
         if (!$paymentMethodId) {
             return;
         }
@@ -94,7 +90,6 @@ class AnfPaymentPlugin extends Plugin
         /** @var EntityRepository $paymentRepository */
         $paymentRepository = $this->container->get('payment_method.repository');
 
-        // Fetch ID for update
         $paymentCriteria = (new Criteria())->addFilter(new EqualsFilter('handlerIdentifier', AnfPaymentHandler::class));
         return $paymentRepository->searchIds($paymentCriteria, Context::createDefaultContext())->firstId();
     }

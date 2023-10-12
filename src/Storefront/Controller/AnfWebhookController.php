@@ -2,11 +2,10 @@
 
 namespace Anf\PaymentPlugin\Storefront\Controller;
 
-
 use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler;
-use Shopware\Core\Checkout\Payment\Cart\AsyncPaymentTransactionStruct;
+use Shopware\Core\Checkout\Payment\Exception\CustomerCanceledAsyncPaymentException;
+use Shopware\Core\Checkout\Payment\PaymentException;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
-use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Shopware\Storefront\Controller\StorefrontController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,23 +16,35 @@ use Symfony\Component\Routing\Annotation\Route;
  */
 class AnfWebhookController extends StorefrontController
 {
+    private OrderTransactionStateHandler $transactionStateHandler;
+
+    public function __construct(OrderTransactionStateHandler $transactionStateHandler)
+    {
+        $this->transactionStateHandler = $transactionStateHandler;
+    }
 
     /**
-     * @Route("/webhook/data", name="webhook.data", methods={"POST"})
-     *
+     * @Route("/webhook/data/{transaction_id}", name="webhook.data", methods={"POST"})
      */
-    public function handleData(Request $request, SalesChannelContext $salesChannelContext): Response
+    public function handleData(Request $request, SalesChannelContext $salesChannelContext, string $transaction_id): Response
     {
-        $a = $request->getContent();
-        $data = json_decode($a, true);
+        $requestData = json_decode($request->getContent(), true);
 
-        if (isset($data['transaction_status'])) {
-            $transaction_status = $data['transaction_status'];
+        if (isset($requestData['transaction_status'])) {
+            $transactionStatus = $requestData['transaction_status'];
             $context = $salesChannelContext->getContext();
-            if ($transaction_status == 'completed') {
-//                $this->transactionStateHandler->paid($data['transaction_id'], $context);
+
+            if ($transactionStatus === 'cancelled') {
+                throw PaymentException::CustomerCanceled($transaction_id, 'Customer canceled the payment on the PayPal page');
             }
-            return new Response("$transaction_status");
+
+            if ($transactionStatus === 'completed') {
+                $this->transactionStateHandler->paid($transaction_id, $context);
+            } else {
+                $this->transactionStateHandler->reopen($transaction_id, $context);
+            }
+
+            return new Response();
         }
 
         return new Response();
