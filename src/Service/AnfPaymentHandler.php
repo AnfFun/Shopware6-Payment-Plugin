@@ -6,7 +6,17 @@ namespace Anf\PaymentPlugin\Service;
 
 use Ginger\ApiClient;
 use GingerPluginSdk\Client;
+use GingerPluginSdk\Collections\AdditionalAddresses;
+use GingerPluginSdk\Collections\PhoneNumbers;
+use GingerPluginSdk\Collections\Transactions;
+use GingerPluginSdk\Entities\Address;
+use GingerPluginSdk\Entities\Customer;
+use GingerPluginSdk\Entities\PaymentMethodDetails;
+use GingerPluginSdk\Entities\Transaction;
 use GingerPluginSdk\Properties\ClientOptions;
+use GingerPluginSdk\Properties\Country;
+use GingerPluginSdk\Properties\Currency;
+use GingerPluginSdk\Properties\Email;
 use Shopware\Core\Checkout\Payment\PaymentException;
 use Shopware\Core\Checkout\Payment\Cart\AsyncPaymentTransactionStruct;
 use Shopware\Core\Checkout\Payment\Cart\PaymentHandler\AsynchronousPaymentHandlerInterface;
@@ -17,8 +27,8 @@ use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
-use GingerPluginSdk\Entities\Order;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
+use GingerPluginSdk\Entities\Order;
 
 class AnfPaymentHandler implements AsynchronousPaymentHandlerInterface
 {
@@ -65,6 +75,7 @@ class AnfPaymentHandler implements AsynchronousPaymentHandlerInterface
 
     /**
      * @throws AsyncPaymentProcessException
+     * @throws \Exception
      */
     public function pay(
       AsyncPaymentTransactionStruct $transaction,
@@ -72,39 +83,99 @@ class AnfPaymentHandler implements AsynchronousPaymentHandlerInterface
       SalesChannelContext $salesChannelContext
     ): RedirectResponse {
         try {
-
             $issuerId = $dataBag->get('selectedIssuerId');
             $transactionId = $transaction->getOrderTransaction()->getId();
-
-            $currency = $transaction->getOrder()->getCurrency()->getIsoCode();
-            $returnUrl = $transaction->getReturnUrl();
-            $amountTotal = round($transaction->getOrder()->getAmountTotal() * 100);
             $description = $transaction->getOrder()
               ->getLineItems()
               ->first()
               ->getLabel();
+            $webhook = 'https://bf4b-193-109-145-96.ngrok-free.app';
+            $webhookUrl = $this->createWebhookUrl($webhook, $transactionId);
+            $returnUrl = $transaction->getReturnUrl();
 
-            $webhookUrl = 'https://e5ff-193-109-145-96.ngrok-free.app';
-            $webhook = $this->callWebhook($webhookUrl, $transactionId);
+            $customerData = $salesChannelContext->getCustomer();
+            $customerFirstName = $customerData->getFirstName();
+            $customerLastName = $customerData->getLastName();
+            $customerEmail = $customerData->getEmail();
+            $customerBillingAddress = $customerData->getActiveBillingAddress();
+            $customerPostalCode = $customerBillingAddress->getZipcode();
+            $customerStreet = $customerBillingAddress->getStreet();
+            $customerCity = $customerBillingAddress->getCity();
+            $customerCountry = $customerBillingAddress->getCountry()->getIso();
+            $customerPhoneNumber = $customerData->getCustomerNumber();
+            $customerCurrency = $transaction->getOrder()
+              ->getCurrency()
+              ->getIsoCode();
+            $customerAmountTotal = $transaction->getOrder()->getAmountTotal();
 
-            $orderDetails = [
-              'amount' => $amountTotal,
-              'description' => $description,
-              'currency' => $currency,
-              'return_url' => $returnUrl,
-              'webhook_url' => $webhook,
-              'transactions' => [
-                [
-                  'payment_method' => 'ideal',
-                  'payment_method_details' => [
-                    'issuer_id' => $issuerId,
-                  ],
-                ],
-              ],
-            ];
+            /*
+              $customerSalutation = $customerData->getSalutation()->getSalutationKey();
+              #не зрозумів як саме діставати гендер(Обов'язкове поле для new Customer),
+               по суті я знайшов такий тільки спосіб Але він не дуже підходить тому поки
+              захардкоджу гендер
+             */
 
-            $order = $this->createApiClient()->createOrder($orderDetails);
-            $redirectUrl = $order['transactions'][0]['payment_url'];
+            $email = new Email($customerEmail);
+
+            $country = new Country($customerCountry);
+
+            $address = new Address(
+              'billing',
+              $customerPostalCode,
+              $customerStreet,
+              $customerCity,
+              $country,
+            );
+
+            $additionalAddress = new AdditionalAddresses(
+              $address
+            );
+
+            $phoneNumber = new PhoneNumbers(
+              $customerPhoneNumber
+            );
+
+            $customer = new Customer(
+              $additionalAddress,
+              $customerFirstName,
+              $customerLastName,
+              $email,
+              'male',
+              $phoneNumber
+            );
+
+            $currency = new Currency(
+              $customerCurrency
+            );
+
+            $methodDetails = new PaymentMethodDetails();
+
+            $methodDetails->setPaymentMethodDetailsIdeal(
+              $issuerId
+            );
+
+            $sdkTransact = new Transaction(
+              'ideal', $methodDetails
+            );
+
+            $sdkTransaction = new Transactions(
+              $sdkTransact
+            );
+
+            $order = new Order (
+              $currency,
+              $customerAmountTotal,
+              $sdkTransaction,
+              $customer,
+              null,
+              null,
+              $webhookUrl,
+              null,
+              $description,
+              null,
+            );
+            $clientOrder = $this->createGingerClient()->sendOrder($order);
+            $redirectUrl = $clientOrder['transactions'][0]['payment_url'];
         } catch (\Exception $e) {
             throw PaymentException::asyncProcessInterrupted(
               $transaction->getOrderTransaction()->getId(),
@@ -125,7 +196,7 @@ class AnfPaymentHandler implements AsynchronousPaymentHandlerInterface
       SalesChannelContext $salesChannelContext
     ): void {}
 
-    private function callWebhook($domainUrl, $transactionId): string
+    private function createWebhookUrl($domainUrl, $transactionId): string
     {
         return "$domainUrl/webhook/data/$transactionId";
     }
