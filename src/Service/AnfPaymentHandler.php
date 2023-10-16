@@ -83,16 +83,18 @@ class AnfPaymentHandler implements AsynchronousPaymentHandlerInterface
       SalesChannelContext $salesChannelContext
     ): RedirectResponse {
         try {
+            // Get necessary data for payment
             $issuerId = $dataBag->get('selectedIssuerId');
             $transactionId = $transaction->getOrderTransaction()->getId();
             $description = $transaction->getOrder()
               ->getLineItems()
               ->first()
               ->getLabel();
-            $webhook = 'https://bf4b-193-109-145-96.ngrok-free.app';
+            $webhook = 'https://fbf6-193-109-145-96.ngrok-free.app';
             $webhookUrl = $this->createWebhookUrl($webhook, $transactionId);
             $returnUrl = $transaction->getReturnUrl();
 
+            // Get customer data
             $customerData = $salesChannelContext->getCustomer();
             $customerFirstName = $customerData->getFirstName();
             $customerLastName = $customerData->getLastName();
@@ -108,33 +110,20 @@ class AnfPaymentHandler implements AsynchronousPaymentHandlerInterface
               ->getIsoCode();
             $customerAmountTotal = $transaction->getOrder()->getAmountTotal();
 
-            /*
-              $customerSalutation = $customerData->getSalutation()->getSalutationKey();
-              #не зрозумів як саме діставати гендер(Обов'язкове поле для new Customer),
-               по суті я знайшов такий тільки спосіб Але він не дуже підходить тому поки
-              захардкоджу гендер
-             */
-
+            // Construct email, country, address, and phone number objects
             $email = new Email($customerEmail);
-
             $country = new Country($customerCountry);
-
             $address = new Address(
               'billing',
               $customerPostalCode,
               $customerStreet,
               $customerCity,
-              $country,
+              $country
             );
+            $additionalAddress = new AdditionalAddresses($address);
+            $phoneNumber = new PhoneNumbers($customerPhoneNumber);
 
-            $additionalAddress = new AdditionalAddresses(
-              $address
-            );
-
-            $phoneNumber = new PhoneNumbers(
-              $customerPhoneNumber
-            );
-
+            // Create customer and currency objects
             $customer = new Customer(
               $additionalAddress,
               $customerFirstName,
@@ -143,43 +132,37 @@ class AnfPaymentHandler implements AsynchronousPaymentHandlerInterface
               'male',
               $phoneNumber
             );
+            $currency = new Currency($customerCurrency);
 
-            $currency = new Currency(
-              $customerCurrency
-            );
-
+            // Create payment method details and transaction
             $methodDetails = new PaymentMethodDetails();
+            $methodDetails->setPaymentMethodDetailsIdeal($issuerId);
 
-            $methodDetails->setPaymentMethodDetailsIdeal(
-              $issuerId
-            );
+            $sdkTransact = new Transaction('ideal', $methodDetails);
+            $sdkTransaction = new Transactions($sdkTransact);
 
-            $sdkTransact = new Transaction(
-              'ideal', $methodDetails
-            );
-
-            $sdkTransaction = new Transactions(
-              $sdkTransact
-            );
-
-            $order = new Order (
+            // Create order object
+            $order = new Order(
               $currency,
               $customerAmountTotal,
               $sdkTransaction,
               $customer,
               null,
-              null,
+              $returnUrl,
               $webhookUrl,
               null,
               $description,
-              null,
+              null
             );
+
+            // Send order to Ginger
             $clientOrder = $this->createGingerClient()->sendOrder($order);
             $redirectUrl = $clientOrder['transactions'][0]['payment_url'];
         } catch (\Exception $e) {
+            // Handle exceptions
             throw PaymentException::asyncProcessInterrupted(
               $transaction->getOrderTransaction()->getId(),
-              'An error occurred during the communication with external payment gateway'.PHP_EOL.$e->getMessage(
+              'An error occurred during the communication with external payment gateway.'.PHP_EOL.$e->getMessage(
               )
             );
         }
@@ -194,7 +177,9 @@ class AnfPaymentHandler implements AsynchronousPaymentHandlerInterface
       AsyncPaymentTransactionStruct $transaction,
       Request $request,
       SalesChannelContext $salesChannelContext
-    ): void {}
+    ): void {
+        // Implementation for finalizing the payment
+    }
 
     private function createWebhookUrl($domainUrl, $transactionId): string
     {
@@ -202,3 +187,4 @@ class AnfPaymentHandler implements AsynchronousPaymentHandlerInterface
     }
 
 }
+
